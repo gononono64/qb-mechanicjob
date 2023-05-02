@@ -16,7 +16,7 @@ local plateZones = {}
 local plateTargetBoxID = 'plateTarget_'
 local dutyTargetBoxID = 'dutyTarget'
 local stashTargetBoxID = 'stashTarget'
-
+local job = {}
 
 -- Exports
 
@@ -48,37 +48,44 @@ exports('SetVehicleStatus', SetVehicleStatus)
 -- Functions
 
 local function DeleteTarget(id)
+    if not job then return end
     if Config.UseTarget then
         exports['qb-target']:RemoveZone(id)
     else
-        if Config.Targets[id] and Config.Targets[id].zone then
-            Config.Targets[id].zone:destroy();
+        if not Config.Targets[job] then return end
+        if Config.Targets[job][id] and Config.Targets[job][id].zone then
+            Config.Targets[job][id].zone:destroy();
         end
     end
 
-    Config.Targets[id] = nil
+    Config.Targets[job][id] = nil
 end
-
-local function RegisterDutyTarget()
-    local coords = Config.Locations['duty']
-    local boxData = Config.Targets[dutyTargetBoxID] or {}
-
-    if boxData and boxData.created then
-        return
+ 
+local function RegisterDutyTarget()   
+    job =false 
+    for i,v in ipairs(Config.Businesses) do
+        if PlayerJob.name == v then
+            job = v
+        end    
     end
+    if not job then return end
 
-    if PlayerJob.type ~= 'mechanic' then
-        return
-    end
+    local coords = Config.Locations[job]['duty']
+    local jobData = Config.Targets[job]
+    if not jobData then Config.Targets[job] = {} end
+    local dutyName = job..':'..dutyTargetBoxID
+    local boxData = Config.Targets[job][dutyName] or {}
+    if boxData and boxData.created then return end    
 
     local label = Lang:t('labels.sign_in')
     if onDuty then
         label = Lang:t('labels.sign_off')
     end
+   
 
     if Config.UseTarget then
-        exports['qb-target']:AddBoxZone(dutyTargetBoxID, coords, 1.5, 1.5, {
-            name = dutyTargetBoxID,
+        exports['qb-target']:AddBoxZone(dutyName, coords, 1.5, 1.5, {
+            name = dutyName,
             heading = 0,
             debugPoly = false,
             minZ = coords.z - 1.0,
@@ -92,10 +99,10 @@ local function RegisterDutyTarget()
             distance = 2.0
         })
 
-        Config.Targets[dutyTargetBoxID] = {created = true}
+        Config.Targets[job][dutyName] = {created = true}
     else
         local zone = BoxZone:Create(coords, 1.5, 1.5, {
-            name = dutyTargetBoxID,
+            name = dutyName,
             heading = 0,
             debugPoly = false,
             minZ = coords.z - 1.0,
@@ -111,25 +118,35 @@ local function RegisterDutyTarget()
             isInsideDutyZone = isPointInside
         end)
 
-        Config.Targets[dutyTargetBoxID] = {created = true, zone = zone}
+        Config.Targets[job][dutyName] = {created = true, zone = zone}
     end
 end
 
 local function RegisterStashTarget()
-    local coords = Config.Locations['stash']
-    local boxData = Config.Targets[stashTargetBoxID] or {}
+    
+    job = false 
+    for i,v in ipairs(Config.Businesses) do
+        if PlayerJob.name == v then
+            job = v
+        end
+    end
+    if not job then return end
+    local configLocation = Config.Locations[job]
+    if not configLocation then return end
+    local coords = configLocation['stash']
+    local name = job..':'..stashTargetBoxID
+    local jobData = Config.Targets[job]
+    if not jobData then Config.Targets[job] = {} end
+    local boxData = Config.Targets[job][name] or {}
 
     if boxData and boxData.created then
         return
     end
 
-    if PlayerJob.type ~= 'mechanic' then
-        return
-    end
-
+    
     if Config.UseTarget then
-        exports['qb-target']:AddBoxZone(stashTargetBoxID, coords, 1.5, 1.5, {
-            name = stashTargetBoxID,
+        exports['qb-target']:AddBoxZone(name, coords, 1.5, 1.5, {
+            name = name,
             heading = 0,
             debugPoly = false,
             minZ = coords.z - 1.0,
@@ -143,10 +160,10 @@ local function RegisterStashTarget()
             distance = 2.0
         })
 
-        Config.Targets[stashTargetBoxID] = {created = true}
+        Config.Targets[job][stashTargetBoxID] = {created = true}
     else
         local zone = BoxZone:Create(coords, 1.5, 1.5, {
-            name = stashTargetBoxID,
+            name = name,
             heading = 0,
             debugPoly = false,
             minZ = coords.z - 1.0,
@@ -162,34 +179,37 @@ local function RegisterStashTarget()
             isInsideStashZone = isPointInside
         end)
 
-        Config.Targets[stashTargetBoxID] = {created = true, zone = zone}
+        Config.Targets[job][name] = {created = true, zone = zone}
     end
 end
 
 local function RegisterGarageZone()
-    local coords = Config.Locations['vehicle']
-    local vehicleZone = BoxZone:Create(vector3(coords.x, coords.y, coords.z), 5, 15, {
-        name = 'vehicleZone',
-        heading = 340.0,
-        minZ = coords.z - 1.0,
-        maxZ = coords.z + 5.0,
-        debugPoly = false
-    })
+    for k, v in pairs(Config.Locations) do
+        local coords = v['vehicle']
+        local vehicleZone = BoxZone:Create(vector3(coords.x, coords.y, coords.z), 5, 15, {
+            name = 'vehicleZone',
+            heading = 340.0,
+            minZ = coords.z - 1.0,
+            maxZ = coords.z + 5.0,
+            debugPoly = false
+        })
 
-    vehicleZone:onPlayerInOut(function (isPointInside)
-        if isPointInside and onDuty then
-            local inVehicle = IsPedInAnyVehicle(PlayerPedId())
-            if inVehicle then
-                exports['qb-core']:DrawText(Lang:t('labels.h_vehicle'), 'left')
+        vehicleZone:onPlayerInOut(function (isPointInside)
+            if isPointInside and onDuty then
+                local inVehicle = IsPedInAnyVehicle(PlayerPedId())
+                if inVehicle then
+                    exports['qb-core']:DrawText(Lang:t('labels.h_vehicle'), 'left')
+                else
+                    exports['qb-core']:DrawText(Lang:t('labels.g_vehicle'), 'left')
+                end
             else
-                exports['qb-core']:DrawText(Lang:t('labels.g_vehicle'), 'left')
+                exports['qb-core']:HideText()
             end
-        else
-            exports['qb-core']:HideText()
-        end
 
-        isInsideGarageZone = isPointInside
-    end)
+            isInsideGarageZone = k
+        end)
+    end
+    
 end
 
 function DestroyVehiclePlateZone(id)
@@ -626,12 +646,23 @@ local function UnattachVehicle()
 end
 
 local function SpawnListVehicle(model)
-    local coords = {
-        x = Config.Locations["vehicle"].x,
-        y = Config.Locations["vehicle"].y,
-        z = Config.Locations["vehicle"].z,
-        w = Config.Locations["vehicle"].w,
-    }
+
+    local closest = nil 
+    local coords = nil
+    for k, v in pairs(Config.Locations) do
+        local coord = v["vehicles"]
+        local distance = #(GetEntityCoords(PlayerPedId()) - vector3(coord.x, coord.y, coord.z))
+        if closest == nil then
+            closest = distance
+            coords = coord
+        end
+        if distance < closest then
+            closest = distance
+            coords = coord
+        end
+    end
+
+    if not closest or closest > 5.0 then TriggerEvent('QBCore:Notify', 'No nearby vehicle spawn point', 'error') return end
 
     QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
         local veh = NetToVeh(netId)
@@ -761,7 +792,13 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     QBCore.Functions.GetPlayerData(function(PlayerData)
         PlayerJob = PlayerData.job
         if PlayerData.job.onduty then
-            if PlayerJob.type == 'mechanic' then
+            local isjob =false 
+            for i,v in ipairs(Config.Businesses) do
+                if PlayerJob.name == v then
+                    isjob =true 
+                end    
+            end
+            if isjob then
                 TriggerServerEvent("QBCore:ToggleDuty")
             end
         end
@@ -781,10 +818,13 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
     PlayerJob = JobInfo
     onDuty = PlayerJob.onduty
 
-    DeleteTarget(dutyTargetBoxID)
-    DeleteTarget(stashTargetBoxID)
+    local newName = PlayerJob.name
+    for k, v in pairs(Config.Businesses) do 
+        DeleteTarget(v..":".. dutyTargetBoxID)
+        DeleteTarget(v..":".. stashTargetBoxID)
+    end
+   
     RegisterDutyTarget()
-
     if onDuty then
         RegisterStashTarget()
     end
@@ -962,8 +1002,9 @@ RegisterNetEvent('vehiclemod:client:repairPart', function(part, level, needAmoun
 end)
 
 RegisterNetEvent('qb-mechanicjob:client:target:OpenStash', function ()
-    TriggerEvent("inventory:client:SetCurrentStash", "mechanicstash")
-    TriggerServerEvent("inventory:server:OpenInventory", "stash", "mechanicstash", {
+    if not job or not Config.Locations[job] or not Config.Locations[job]['stash'] then return end
+    TriggerEvent("inventory:client:SetCurrentStash", job.."stash")
+    TriggerServerEvent("inventory:server:OpenInventory", "stash", job.."stash", {
         maxweight = 4000000,
         slots = 500,
     })
@@ -976,7 +1017,23 @@ RegisterNetEvent('qb-mechanicjob:client:target:CloseMenu', function()
     TriggerEvent('qb-menu:client:closeMenu')
 end)
 
-
+function CreateBlips() 
+    for k, v in pairs(Config.Locations) do
+        local config = v["exit"]
+        if config then 
+            local Blip = AddBlipForCoord(config.x, config.y, config.z)
+            SetBlipSprite (Blip, 446)
+            SetBlipDisplay(Blip, 4)
+            SetBlipScale  (Blip, 0.7)
+            SetBlipAsShortRange(Blip, true)
+            SetBlipColour(Blip, 0)
+            SetBlipAlpha(Blip, 0.7)
+            BeginTextCommandSetBlipName("STRING")
+            AddTextComponentSubstringPlayerName(Lang:t('labels.job_blip'))
+            EndTextCommandSetBlipName(Blip)
+        end 
+    end
+end
 -- Threads
 
 CreateThread(function()
@@ -986,16 +1043,7 @@ CreateThread(function()
         Wait(wait)
     end
 
-    local Blip = AddBlipForCoord(Config.Locations["exit"].x, Config.Locations["exit"].y, Config.Locations["exit"].z)
-    SetBlipSprite (Blip, 446)
-    SetBlipDisplay(Blip, 4)
-    SetBlipScale  (Blip, 0.7)
-    SetBlipAsShortRange(Blip, true)
-    SetBlipColour(Blip, 0)
-    SetBlipAlpha(Blip, 0.7)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentSubstringPlayerName(Lang:t('labels.job_blip'))
-    EndTextCommandSetBlipName(Blip)
+    CreateBlips() 
 
     RegisterGarageZone()
     RegisterDutyTarget()
@@ -1006,7 +1054,14 @@ CreateThread(function()
         wait = 500
         SetClosestPlate()
 
-        if PlayerJob.type == 'mechanic' then
+        local isjob =false 
+        for i,v in ipairs(Config.Businesses) do
+            if PlayerJob.name == v then
+                isjob =true 
+            end    
+        end
+        
+        if isjob then
 
             if isInsideDutyZone then
                 wait = 0
@@ -1023,7 +1078,7 @@ CreateThread(function()
                     end
                 end
 
-                if isInsideGarageZone then
+                if isInsideGarageZone and isInsideGarageZone == job then
                     wait = 0
                     local inVehicle = IsPedInAnyVehicle(PlayerPedId())
                     if IsControlJustPressed(0, 38) then

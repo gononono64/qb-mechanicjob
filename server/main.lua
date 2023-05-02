@@ -60,7 +60,14 @@ QBCore.Functions.CreateCallback('qb-vehicletuning:server:IsMechanicAvailable', f
     for _, v in pairs(QBCore.Functions.GetPlayers()) do
         local Player = QBCore.Functions.GetPlayer(v)
         if Player ~= nil then
-            if (Player.PlayerData.job.name == "mechanic" and Player.PlayerData.job.onduty) then
+            local isjob =false 
+            for i,v in ipairs(Config.Businesses) do
+                if Player.PlayerData.job.name == v then
+                    isjob =true 
+                end    
+            end
+           
+            if (isjob and Player.PlayerData.job.onduty) then
                 amount = amount + 1
             end
         end

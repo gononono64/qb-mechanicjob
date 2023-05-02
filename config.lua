@@ -43,43 +43,43 @@ Config.RepairCost = {
 Config.RepairCostAmount = {
     ["engine"] = {
         item = "metalscrap",
-        costs = 2,
+        costs = 100,
     },
     ["body"] = {
         item = "plastic",
-        costs = 3,
+        costs = 300,
     },
     ["radiator"] = {
         item = "steel",
-        costs = 5,
+        costs = 10,
     },
     ["axle"] = {
         item = "aluminum",
-        costs = 7,
+        costs = 70,
     },
     ["brakes"] = {
         item = "copper",
-        costs = 5,
+        costs = 50,
     },
     ["clutch"] = {
         item = "copper",
-        costs = 6,
+        costs = 60,
     },
     ["fuel"] = {
         item = "plastic",
-        costs = 5,
+        costs = 50,
     },
 }
 
 Config.Businesses = {
-    "Auto Repair",
+    "mechanic",
+    "baycitycustoms",
 }
-
 Config.Plates = {
     [1] = {
-        coords = vector4(-340.95, -128.24, 39, 160.0),
+        coords = vector4(274.96, -1806.47, 26.91, 318.86),
         boxData = {
-            heading = 340,
+            heading = 318,
             length = 5,
             width = 2.5,
             debugPoly = false
@@ -87,7 +87,7 @@ Config.Plates = {
         AttachedVehicle = nil,
     },
     [2] = {
-        coords = vector4(-327.91, -144.34, 38.86, 70.34),
+        coords = vector4(269.43, -1801.5, 26.91, 317.11),
         boxData = {
             heading = 249,
             length = 6.5,
@@ -96,13 +96,37 @@ Config.Plates = {
         },
         AttachedVehicle = nil,
     },
-}
+    [3] = {
+        coords = vector4(281.38, -1809.99, 26.91, 141.44),
+        boxData = {
+            heading = 340,
+            length = 5,
+            width = 2.5,
+            debugPoly = false
+        },
+        AttachedVehicle = nil,
+    },
+  
+}    
+  
 
 Config.Locations = {
-    ["exit"] = vector3(-339.04, -135.53, 39),
-    ["duty"] = vector3(-323.39, -129.6, 39.01),
-    ["stash"] = vector3(-319.49, -131.9, 38.98),
-    ["vehicle"] = vector4(-370.51, -107.88, 38.35, 72.56),
+    ['mechanic'] = {
+        ["exit"] = vector3(-339.04, -135.53, 39),
+        ["duty"] = vector3(269.01, -1824.64, 26.91),
+        ["stash"] = vector3(256.54, -1814.61, 26.91),
+        ["vehicle"] = vector4(261.89, -1796.53, 27.11, 318.71),
+    },
+    ['baycitycustoms'] = {
+        ["exit"] = vector3(-339.04, -135.53, 39),
+        ["duty"] = vector3(-1611.54, -837.81, 10.1),
+        ["stash"] = vector3(-1618.62, -833.47, 10.13),
+        ["vehicle"] = vector4(-1636.61, -807.12, 10.2, 143.46),
+    }   
+  --- Bay City 
+
+    
+
 }
 
 Config.Vehicles = {
