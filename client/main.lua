@@ -16,7 +16,7 @@ local plateZones = {}
 local plateTargetBoxID = 'plateTarget_'
 local dutyTargetBoxID = 'dutyTarget'
 local stashTargetBoxID = 'stashTarget'
-local job = {}
+local job = false
 
 -- Exports
 
@@ -202,11 +202,13 @@ local function RegisterGarageZone()
                 else
                     exports['qb-core']:DrawText(Lang:t('labels.g_vehicle'), 'left')
                 end
+                isInsideGarageZone = k
             else
                 exports['qb-core']:HideText()
+                isInsideGarageZone = false
             end
 
-            isInsideGarageZone = k
+            
         end)
     end
     
