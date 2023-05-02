@@ -652,7 +652,7 @@ local function SpawnListVehicle(model)
     local closest = nil 
     local coords = nil
     for k, v in pairs(Config.Locations) do
-        local coord = v["vehicles"]
+        local coord = v["vehicle"]
         local distance = #(GetEntityCoords(PlayerPedId()) - vector3(coord.x, coord.y, coord.z))
         if closest == nil then
             closest = distance
